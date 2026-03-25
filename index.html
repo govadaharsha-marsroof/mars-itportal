@@ -121,9 +121,26 @@ nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex
 .priority-btn[data-p="Critical"].sel{border-color:#a855f7;color:#a855f7;background:#faf5ff;}
 .submit-btn{width:100%;margin-top:22px;padding:14px;border-radius:11px;border:none;background:var(--accent);color:#fff;font-family:'Familjen Grotesk',sans-serif;font-size:.98rem;font-weight:700;cursor:pointer;transition:all .2s;}
 .submit-btn:hover{background:#1648c0;transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,86,219,.25);}
+.submit-btn{width:100%;margin-top:22px;padding:14px;border-radius:11px;border:none;background:var(--accent);color:#fff;font-family:'Familjen Grotesk',sans-serif;font-size:.98rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.submit-btn:hover{background:#1648c0;transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,86,219,.25);}
 .submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-
-/* BADGES */
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:var(--accent-light);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-zone-icon{font-size:1.8rem;margin-bottom:6px;}
+.upload-zone-text{font-size:.82rem;color:var(--muted);font-weight:600;}
+.upload-zone-sub{font-size:.72rem;color:var(--muted);margin-top:3px;}
+.screenshot-preview{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;}
+.preview-item{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1.5px solid var(--border);}
+.preview-item img{width:100%;height:100%;object-fit:cover;}
+.preview-remove{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;}
+.modal-screenshots{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.modal-screenshot{width:90px;height:90px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);cursor:pointer;transition:transform .2s;}
+.modal-screenshot:hover{transform:scale(1.05);}
+#lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;}
+#lightbox.open{display:flex;}
+#lightbox img{max-width:92vw;max-height:92vh;border-radius:10px;}
+.modal-btn.danger-btn{background:var(--danger);border-color:var(--danger);color:#fff;}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;}
 .badge-open{background:#eff6ff;color:#1d4ed8;}
 .badge-progress{background:#fffbeb;color:#b45309;}
@@ -360,6 +377,19 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:16px
             <textarea id="f-notes" placeholder="Any extra details or context..."></textarea>
           </div>
         </div>
+        <div class="form-row full">
+          <div class="field">
+            <label>Screenshots / Images (optional)</label>
+            <div class="upload-zone" id="upload-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+              <input type="file" id="f-screenshots" accept="image/*" multiple onchange="handleFileSelect(event)"/>
+              <div class="upload-zone-icon">📎</div>
+              <div class="upload-zone-text">Click to browse or drag & drop images here</div>
+              <div class="upload-zone-sub">PNG, JPG, GIF · Max 2MB per image</div>
+            </div>
+            <div class="screenshot-preview" id="screenshot-preview"></div>
+            <div id="upload-err" style="color:var(--danger);font-size:.75rem;margin-top:4px;"></div>
+          </div>
+        </div>
         <button class="submit-btn" id="submit-ticket-btn" onclick="submitTicket()">🚀 Submit Ticket</button>
       </div>
     </div>
@@ -438,18 +468,28 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:16px
     <div class="modal-field"><label>Category</label><p id="m-cat"></p></div>
     <div class="modal-field"><label>Issue Details</label><p id="m-details" style="white-space:pre-wrap;"></p></div>
     <div class="modal-field"><label>Additional Notes</label><p id="m-notes"></p></div>
+    <div class="modal-field" id="m-screenshots-field" style="display:none;">
+      <label>Screenshots</label>
+      <div class="modal-screenshots" id="m-screenshots"></div>
+    </div>
     <div class="modal-field"><label>Assigned To</label><p id="m-assign"></p></div>
-    <div class="modal-field"><label>Update Status</label>
+    <div class="modal-field" id="m-status-field"><label>Update Status</label>
       <select id="m-status" style="margin-top:4px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;font-size:.85rem;outline:none;color:var(--text);">
         <option>Open</option><option>In Progress</option><option>Closed</option>
       </select>
     </div>
     <div class="modal-actions">
-      <button class="modal-btn primary" onclick="saveStatus()">💾 Save</button>
-      <button class="modal-btn success-btn" onclick="closeTicketAction()">✅ Close Ticket</button>
+      <button class="modal-btn primary" id="m-save-btn" onclick="saveStatus()">💾 Save</button>
+      <button class="modal-btn success-btn" id="m-close-btn" onclick="closeTicketAction()">✅ Close Ticket</button>
+      <button class="modal-btn danger-btn" id="m-delete-btn" style="display:none;" onclick="deleteTicket()">🗑️ Delete</button>
       <button class="modal-btn close-btn" onclick="closeModal()">✕ Dismiss</button>
     </div>
   </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="Screenshot"/>
 </div>
 
 <!-- ADD/EDIT USER MODAL -->
@@ -518,8 +558,18 @@ const CONTACT_INFO = [
   { label: '🕐 Hours',  value: 'Mon–Fri, 9am–5pm' },
 ];
 
-// ── INVITE CODE — change anytime ──
-const INVITE_CODE = 'MARS2025';
+// ── INVITE CODE — stored securely in Firestore config collection ──
+let INVITE_CODE = null; // fetched from Firebase, never hardcoded
+
+async function loadInviteCode(){
+  try{
+    const snap = await getDocs(collection(db,'config'));
+    if(!snap.empty){
+      const data = snap.docs[0].data();
+      INVITE_CODE = data.inviteCode || null;
+    }
+  } catch(e){ console.error('Could not load config',e); }
+}
 
 const CAT_COLORS = {
   'Device & Hardware':'#1a56db','Access & Permissions':'#ef4444',
@@ -536,6 +586,45 @@ let allUsers = [];
 let selectedCat = '', selectedPriority = 'Medium', currentFilter = 'All';
 let activeTicketId = null, editingUserId = null;
 let unsubTickets = null;
+let screenshotData = []; // base64 array for current ticket being composed
+
+// ═══════════════════════════════
+//  SCREENSHOT HANDLERS
+// ═══════════════════════════════
+window.handleDragOver = function(e){ e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); };
+window.handleDragLeave = function(){ document.getElementById('upload-zone').classList.remove('drag-over'); };
+window.handleDrop = function(e){ e.preventDefault(); document.getElementById('upload-zone').classList.remove('drag-over'); processFiles(e.dataTransfer.files); };
+window.handleFileSelect = function(e){ processFiles(e.target.files); };
+
+function processFiles(files){
+  const errEl = document.getElementById('upload-err');
+  errEl.textContent = '';
+  Array.from(files).forEach(file => {
+    if(!file.type.startsWith('image/')){ errEl.textContent = '⚠️ Only image files are allowed.'; return; }
+    if(file.size > 2 * 1024 * 1024){ errEl.textContent = `⚠️ "${file.name}" is too large. Max 2MB per image.`; return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      screenshotData.push(e.target.result);
+      renderScreenshotPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('f-screenshots').value = '';
+}
+
+function renderScreenshotPreviews(){
+  const container = document.getElementById('screenshot-preview');
+  container.innerHTML = screenshotData.map((src, i) => `
+    <div class="preview-item">
+      <img src="${src}" alt="Screenshot ${i+1}"/>
+      <button class="preview-remove" onclick="removeScreenshot(${i})">✕</button>
+    </div>`).join('');
+}
+window.removeScreenshot = function(i){ screenshotData.splice(i,1); renderScreenshotPreviews(); };
+
+// Lightbox
+window.openLightbox = function(src){ document.getElementById('lightbox-img').src=src; document.getElementById('lightbox').classList.add('open'); };
+window.closeLightbox = function(){ document.getElementById('lightbox').classList.remove('open'); };
 
 // ═══════════════════════════════
 //  INIT
@@ -549,6 +638,7 @@ function renderFooter(){
 }
 renderFooter();
 document.getElementById('f-date').valueAsDate = new Date();
+loadInviteCode(); // fetch invite code from Firestore securely
 
 // Auth state listener — runs on every page load
 onAuthStateChanged(auth, async (user) => {
@@ -618,7 +708,10 @@ window.doSignup = async function(){
   err.textContent='';
   if(!name||!email||!pass){err.textContent='⚠️ Name, email and password are required.';return;}
   if(pass.length<6){err.textContent='⚠️ Password must be at least 6 characters.';return;}
-  if(invite!==INVITE_CODE){err.textContent='⚠️ Invalid invite code. Please contact your IT admin.';return;}
+  // If invite code not loaded yet, try fetching again
+  if(!INVITE_CODE){ await loadInviteCode(); }
+  if(!INVITE_CODE){ err.textContent='⚠️ Unable to verify invite code. Please try again.';return;}
+  if(invite!==INVITE_CODE.toUpperCase()){err.textContent='⚠️ Invalid invite code. Please contact your IT admin.';return;}
   btn.disabled=true; btn.textContent='Creating account…';
   try{
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
@@ -965,6 +1058,7 @@ window.submitTicket = async function(){
     startDate:document.getElementById('f-date').value||'—',
     status:'Open', assignee,
     submitted:new Date().toLocaleString(),
+    screenshots: screenshotData,
     createdAt:serverTimestamp()
   });
 
@@ -978,6 +1072,9 @@ window.submitTicket = async function(){
   document.querySelectorAll('.priority-btn').forEach(b=>b.classList.remove('sel'));
   document.querySelector('[data-p="Medium"]').classList.add('sel');
   selectedPriority='Medium';
+  screenshotData=[];
+  renderScreenshotPreviews();
+  document.getElementById('upload-err').textContent='';
   btn.disabled=false; btn.textContent='🚀 Submit Ticket';
   window.scrollTo({top:0,behavior:'smooth'});
   const toast=document.getElementById('toast');
@@ -1053,6 +1150,23 @@ window.openModal = function(id){
   document.getElementById('m-notes').textContent=t.notes||'—';
   document.getElementById('m-assign').textContent=t.assignee;
   document.getElementById('m-status').value=t.status;
+  // Screenshots
+  const shots = t.screenshots && t.screenshots.length ? t.screenshots : [];
+  const shotsField = document.getElementById('m-screenshots-field');
+  const shotsContainer = document.getElementById('m-screenshots');
+  if(shots.length){
+    shotsField.style.display='block';
+    shotsContainer.innerHTML = shots.map(src=>`<img class="modal-screenshot" src="${src}" alt="Screenshot" onclick="openLightbox('${src}')" title="Click to enlarge"/>`).join('');
+  } else {
+    shotsField.style.display='none';
+    shotsContainer.innerHTML='';
+  }
+  // Delete button — super admins only
+  const isAdmin = userProfile && userProfile.role==='superadmin';
+  document.getElementById('m-delete-btn').style.display = isAdmin ? '' : 'none';
+  document.getElementById('m-save-btn').style.display = isAdmin ? '' : 'none';
+  document.getElementById('m-close-btn').style.display = isAdmin ? '' : 'none';
+  document.getElementById('m-status-field').style.display = isAdmin ? '' : 'none';
   document.getElementById('modal').classList.add('open');
 };
 window.closeModal = function(){ document.getElementById('modal').classList.remove('open'); activeTicketId=null; };
@@ -1066,6 +1180,12 @@ window.saveStatus = async function(){
 window.closeTicketAction = async function(){
   if(!activeTicketId)return;
   await updateDoc(doc(db,'tickets',activeTicketId),{status:'Closed'});
+  closeModal();
+};
+window.deleteTicket = async function(){
+  if(!activeTicketId)return;
+  if(!confirm('Permanently delete this ticket? This cannot be undone.'))return;
+  await deleteDoc(doc(db,'tickets',activeTicketId));
   closeModal();
 };
 
