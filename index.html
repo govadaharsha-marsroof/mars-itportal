@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MARS Restoration IT Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Familjen+Grotesk:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f4f6fb;--surface:#ffffff;--surface2:#f0f3fa;--border:#dde3f0;
+  --accent:#1a56db;--accent-light:#e8f0fe;
+  --warn:#f59e0b;--danger:#ef4444;--success:#10b981;
+  --text:#1a1f36;--muted:#6b7a99;--card-shadow:0 2px 16px rgba(26,86,219,0.08);
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+
+/* LOADING OVERLAY */
+#loading-overlay{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-overlay p{color:var(--muted);font-size:.88rem;}
+
+/* BANNER */
+.org-banner{width:100%;height:180px;display:block;background:linear-gradient(135deg,#1a56db 0%,#0ea5e9 50%,#6366f1 100%);position:relative;overflow:hidden;flex-shrink:0;}
+.org-banner-inner{position:relative;height:100%;display:flex;align-items:center;padding:0 40px;gap:24px;}
+.org-banner svg{flex-shrink:0;}
+.org-banner-text h1{font-family:'Familjen Grotesk',sans-serif;font-size:1.9rem;font-weight:800;color:#fff;letter-spacing:-.5px;line-height:1.1;}
+.org-banner-text p{color:rgba(255,255,255,.75);font-size:.9rem;margin-top:4px;}
+.org-banner::before{content:'';position:absolute;inset:0;opacity:.07;background-image:radial-gradient(circle,#fff 1px,transparent 1px);background-size:28px 28px;}
+
+/* AUTH SCREENS */
+#login-screen,#signup-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--bg);}
+#signup-screen{display:none;}
+.login-banner{width:100%;}
+.login-wrap{width:100%;max-width:420px;padding:0 20px;margin-top:-32px;position:relative;z-index:10;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;box-shadow:0 8px 40px rgba(26,86,219,0.13);}
+.login-logo{font-family:'Familjen Grotesk',sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent);text-align:center;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.login-sub{text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:28px;}
+.lf{margin-bottom:14px;}
+.lf label{display:block;font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:5px;letter-spacing:.4px;text-transform:uppercase;}
+.lf input,.lf select{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:inherit;font-size:.92rem;outline:none;transition:border-color .2s;}
+.lf input:focus,.lf select:focus{border-color:var(--accent);background:#fff;}
+.login-btn{width:100%;margin-top:6px;padding:13px;border-radius:11px;border:none;background:var(--accent);color:#fff;font-family:'Familjen Grotesk',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.2px;}
+.login-btn:hover{background:#1648c0;transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,86,219,.3);}
+.login-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.login-err{color:var(--danger);font-size:.78rem;text-align:center;margin-top:8px;min-height:16px;}
+.auth-link{text-align:center;margin-top:16px;font-size:.82rem;color:var(--muted);}
+.auth-link a{color:var(--accent);font-weight:700;text-decoration:none;}
+
+/* APP SHELL */
+#app{display:none;flex:1;flex-direction:column;}
+
+/* NAV */
+nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+.nav-logo{font-family:'Familjen Grotesk',sans-serif;font-size:1.1rem;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:7px;}
+.nav-center{display:flex;gap:2px;}
+.nav-tab{padding:6px 16px;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s;}
+.nav-tab:hover{color:var(--text);background:var(--surface2);}
+.nav-tab.active{color:var(--accent);background:var(--accent-light);}
+.nav-badge{background:var(--danger);color:#fff;font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:20px;margin-left:4px;vertical-align:middle;}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.nav-user-pill{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:.8rem;font-weight:600;}
+.role-dot{width:8px;height:8px;border-radius:50%;}
+.role-dot.superadmin{background:#a855f7;}
+.role-dot.user{background:var(--success);}
+.logout-btn{padding:5px 12px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+
+/* PAGES */
+.page{display:none;flex:1;}
+.page.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.page-inner{max-width:1100px;margin:0 auto;padding:32px 24px;}
+
+/* SUBMIT PAGE */
+.submit-hero{background:linear-gradient(135deg,var(--accent) 0%,#6366f1 100%);padding:32px 28px;border-radius:var(--radius);color:#fff;margin-bottom:28px;position:relative;overflow:hidden;}
+.submit-hero::before{content:'';position:absolute;inset:0;opacity:.07;background-image:radial-gradient(circle,#fff 1.5px,transparent 1.5px);background-size:24px 24px;}
+.submit-hero h2{font-family:'Familjen Grotesk',sans-serif;font-size:1.6rem;font-weight:800;position:relative;}
+.submit-hero p{font-size:.88rem;opacity:.85;margin-top:5px;position:relative;}
+.welcome-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:20px;padding:4px 12px;font-size:.78rem;font-weight:600;margin-bottom:10px;}
+
+/* TICKET TRACKER */
+.tracker-section{margin-bottom:28px;}
+.tracker-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.tracker-header h3{font-family:'Familjen Grotesk',sans-serif;font-size:1rem;font-weight:800;color:var(--text);}
+.my-ticket-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:box-shadow .2s;}
+.my-ticket-card:hover{box-shadow:var(--card-shadow);}
+.mtc-id{font-size:.72rem;font-weight:700;color:var(--muted);width:70px;flex-shrink:0;}
+.mtc-info{flex:1;}
+.mtc-title{font-size:.88rem;font-weight:600;}
+.mtc-cat{font-size:.75rem;color:var(--muted);margin-top:2px;}
+.mtc-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+
+/* CATEGORY GRID */
+.cat-section-label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px;}
+.cat-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:18px 14px;text-align:center;cursor:pointer;transition:all .18s;user-select:none;}
+.cat-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 16px rgba(26,86,219,.1);}
+.cat-card.selected{border-color:var(--accent);background:var(--accent-light);box-shadow:0 0 0 3px rgba(26,86,219,.12);}
+.cat-icon{font-size:1.8rem;margin-bottom:8px;}
+.cat-label{font-size:.78rem;font-weight:700;color:var(--text);}
+
+/* FORM */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--card-shadow);}
+.form-section-title{font-family:'Familjen Grotesk',sans-serif;font-size:.85rem;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin:22px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--accent-light);}
+.form-section-title:first-child{margin-top:0;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-row.full{grid-template-columns:1fr;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;}
+.field input,.field select,.field textarea{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:inherit;font-size:.88rem;transition:border-color .2s,background .2s;outline:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);background:#fff;}
+.field textarea{resize:vertical;min-height:90px;}
+.priority-row{display:flex;gap:8px;flex-wrap:wrap;}
+.priority-btn{padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.priority-btn[data-p="Low"].sel{border-color:var(--success);color:var(--success);background:#ecfdf5;}
+.priority-btn[data-p="Medium"].sel{border-color:var(--warn);color:var(--warn);background:#fffbeb;}
+.priority-btn[data-p="High"].sel{border-color:var(--danger);color:var(--danger);background:#fef2f2;}
+.priority-btn[data-p="Critical"].sel{border-color:#a855f7;color:#a855f7;background:#faf5ff;}
+.submit-btn{width:100%;margin-top:22px;padding:14px;border-radius:11px;border:none;background:var(--accent);color:#fff;font-family:'Familjen Grotesk',sans-serif;font-size:.98rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.submit-btn:hover{background:#1648c0;transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,86,219,.25);}
+.submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;}
+.badge-open{background:#eff6ff;color:#1d4ed8;}
+.badge-progress{background:#fffbeb;color:#b45309;}
+.badge-closed{background:#ecfdf5;color:#065f46;}
+.badge-critical,.badge-high{background:#fef2f2;color:#b91c1c;}
+.badge-medium{background:#fffbeb;color:#92400e;}
+.badge-low{background:#ecfdf5;color:#065f46;}
+.badge-superadmin{background:#faf5ff;color:#7e22ce;}
+.badge-user{background:#ecfdf5;color:#065f46;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--surface);border:1px solid var(--success);border-radius:14px;padding:14px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:340px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-icon{font-size:1.3rem;}
+.toast-text b{display:block;font-size:.9rem;color:var(--success);}
+.toast-text span{font-size:.77rem;color:var(--muted);}
+
+/* DASHBOARD */
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+.dash-header h1{font-family:'Familjen Grotesk',sans-serif;font-size:1.6rem;font-weight:800;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--card-shadow);}
+.stat-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;}
+.stat-num{font-family:'Familjen Grotesk',sans-serif;font-size:2rem;font-weight:800;}
+.stat-card.s-open .stat-num{color:var(--accent);}
+.stat-card.s-progress .stat-num{color:var(--warn);}
+.stat-card.s-closed .stat-num{color:var(--success);}
+.stat-card.s-critical .stat-num{color:var(--danger);}
+.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:24px;box-shadow:var(--card-shadow);}
+.chart-title{font-family:'Familjen Grotesk',sans-serif;font-size:.9rem;font-weight:800;margin-bottom:16px;color:var(--text);}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:90px;}
+.bar-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;}
+.bar{width:100%;border-radius:5px 5px 0 0;transition:height .5s ease;min-height:4px;}
+.bar-lbl{font-size:.65rem;color:var(--muted);text-align:center;white-space:nowrap;}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+.filter-btn{padding:5px 14px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.filter-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+.search-box{margin-left:auto;padding:7px 13px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:inherit;font-size:.8rem;width:210px;outline:none;}
+.search-box:focus{border-color:var(--accent);background:#fff;}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;box-shadow:var(--card-shadow);}
+.t{width:100%;border-collapse:collapse;}
+.t th{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;background:var(--surface2);}
+.t td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:.84rem;vertical-align:middle;}
+.t tr:last-child td{border-bottom:none;}
+.t tr:hover td{background:#f8faff;}
+.assignee-chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:.73rem;font-weight:600;}
+.action-btn{padding:4px 11px;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:.73rem;font-weight:600;cursor:pointer;transition:all .2s;margin-right:4px;}
+.action-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+.action-btn.danger:hover{border-color:var(--danger);color:var(--danger);background:#fef2f2;}
+.admin-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--border);}
+.admin-tab{padding:10px 22px;font-size:.85rem;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;}
+.admin-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.admin-panel{display:none;}
+.admin-panel.active{display:block;animation:fadeUp .3s ease;}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.add-btn{padding:8px 18px;border-radius:9px;border:none;background:var(--accent);color:#fff;font-family:'Familjen Grotesk',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.add-btn:hover{background:#1648c0;transform:translateY(-1px);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:92%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:fadeUp .25s ease;max-height:90vh;overflow-y:auto;}
+.modal h2{font-family:'Familjen Grotesk',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:4px;}
+.modal-meta{font-size:.77rem;color:var(--muted);margin-bottom:18px;}
+.modal-field{margin-bottom:12px;}
+.modal-field label{font-size:.72rem;color:var(--muted);font-weight:700;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}
+.modal-field p{font-size:.87rem;line-height:1.6;}
+.modal-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;}
+.modal-btn{padding:8px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.modal-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.modal-btn.success-btn{background:var(--success);border-color:var(--success);color:#fff;}
+.modal-btn.close-btn{margin-left:auto;color:var(--muted);}
+.modal-btn:hover{opacity:.85;}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);}
+.footer-logo{font-family:'Familjen Grotesk',sans-serif;font-size:.9rem;font-weight:800;color:var(--accent);}
+.footer-contacts{display:flex;gap:20px;flex-wrap:wrap;align-items:center;}
+.contact-item{display:flex;align-items:center;gap:5px;}
+.contact-item span:first-child{font-weight:700;color:var(--text);}
+
+@media(max-width:768px){
+  nav{padding:0 14px;}.page-inner{padding:20px 14px;}
+  .stats-row{grid-template-columns:1fr 1fr;}.form-row{grid-template-columns:1fr;}
+  .org-banner-inner{padding:0 20px;}.org-banner-text h1{font-size:1.4rem;}
+  .login-wrap{margin-top:-24px;}
+  footer{flex-direction:column;text-align:center;}.footer-contacts{justify-content:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <p>Connecting to MARS IT Portal…</p>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;">
+  <div class="org-banner login-banner">
+    <div class="org-banner-inner">
+      <svg width="72" height="72" viewBox="0 0 72 72" fill="none"><rect width="72" height="72" rx="18" fill="rgba(255,255,255,0.15)"/><rect x="12" y="30" width="14" height="18" rx="3" fill="white" opacity=".9"/><rect x="29" y="20" width="14" height="28" rx="3" fill="white"/><rect x="46" y="25" width="14" height="23" rx="3" fill="white" opacity=".8"/><circle cx="19" cy="22" r="6" fill="white" opacity=".7"/><circle cx="36" cy="14" r="5" fill="white" opacity=".9"/><circle cx="53" cy="18" r="5" fill="white" opacity=".65"/></svg>
+      <div class="org-banner-text">
+        <h1>⚡ MARS Restoration IT Portal</h1>
+        <p>Your organization's IT support — fast, simple, trackable</p>
+      </div>
+    </div>
+  </div>
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">🔐 Sign In</div>
+      <div class="login-sub">Enter your credentials to access the portal</div>
+      <div class="lf"><label>Email</label><input type="email" id="li-email" placeholder="your@email.com" autocomplete="email"/></div>
+      <div class="lf"><label>Password</label><input type="password" id="li-pass" placeholder="your password" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password"/></div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In →</button>
+      <div class="login-err" id="login-err"></div>
+      <div class="auth-link">Don't have an account? <a href="#" onclick="showSignup();return false;">Create one here</a></div>
+    </div>
+  </div>
+  <div style="width:100%;margin-top:auto;">
+    <footer><div class="footer-logo">⚡ MARS HelpDesk</div><div class="footer-contacts" id="footer-contacts-login"></div></footer>
+  </div>
+</div>
+
+<!-- SIGNUP -->
+<div id="signup-screen" style="display:none;">
+  <div class="org-banner login-banner">
+    <div class="org-banner-inner">
+      <svg width="72" height="72" viewBox="0 0 72 72" fill="none"><rect width="72" height="72" rx="18" fill="rgba(255,255,255,0.15)"/><rect x="12" y="30" width="14" height="18" rx="3" fill="white" opacity=".9"/><rect x="29" y="20" width="14" height="28" rx="3" fill="white"/><rect x="46" y="25" width="14" height="23" rx="3" fill="white" opacity=".8"/><circle cx="19" cy="22" r="6" fill="white" opacity=".7"/><circle cx="36" cy="14" r="5" fill="white" opacity=".9"/><circle cx="53" cy="18" r="5" fill="white" opacity=".65"/></svg>
+      <div class="org-banner-text">
+        <h1>⚡ MARS Restoration IT Portal</h1>
+        <p>Create your account to get started</p>
+      </div>
+    </div>
+  </div>
+  <div class="login-wrap" style="max-width:460px;">
+    <div class="login-box">
+      <div class="login-logo">✨ Create Account</div>
+      <div class="login-sub">Fill in your details to sign up instantly</div>
+      <div class="lf"><label>Full Name *</label><input type="text" id="su-name" placeholder="e.g. Jane Smith"/></div>
+      <div class="lf"><label>Email *</label><input type="email" id="su-email" placeholder="your@marsrestoration.com"/></div>
+      <div class="lf"><label>Password *</label><input type="password" id="su-pass" placeholder="choose a strong password"/></div>
+      <div class="lf"><label>Department</label>
+        <select id="su-dept">
+          <option value="">— Select Department —</option>
+          <option>Operations</option><option>Finance</option><option>HR</option>
+          <option>IT</option><option>Sales</option><option>Marketing</option><option>Executive</option><option>Other</option>
+        </select>
+      </div>
+      <div class="lf">
+        <label>Invite Code *</label>
+        <input type="text" id="su-invite" placeholder="Enter the invite code provided by IT" autocomplete="off" style="letter-spacing:2px;text-transform:uppercase;"/>
+        <div style="margin-top:5px;font-size:.72rem;color:var(--muted);">🔒 Ask your IT admin for the invite code</div>
+      </div>
+      <button class="login-btn" id="signup-btn" onclick="doSignup()">Create Account →</button>
+      <div class="login-err" id="signup-err"></div>
+      <div class="auth-link">Already have an account? <a href="#" onclick="showLogin();return false;">Sign in here</a></div>
+    </div>
+  </div>
+  <div style="width:100%;margin-top:auto;">
+    <footer><div class="footer-logo">⚡ MARS HelpDesk</div><div class="footer-contacts" id="footer-contacts-signup"></div></footer>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;flex-direction:column;flex:1;">
+  <div class="org-banner">
+    <div class="org-banner-inner">
+      <svg width="56" height="56" viewBox="0 0 72 72" fill="none"><rect width="72" height="72" rx="18" fill="rgba(255,255,255,0.15)"/><rect x="12" y="30" width="14" height="18" rx="3" fill="white" opacity=".9"/><rect x="29" y="20" width="14" height="28" rx="3" fill="white"/><rect x="46" y="25" width="14" height="23" rx="3" fill="white" opacity=".8"/><circle cx="19" cy="22" r="6" fill="white" opacity=".7"/><circle cx="36" cy="14" r="5" fill="white" opacity=".9"/><circle cx="53" cy="18" r="5" fill="white" opacity=".65"/></svg>
+      <div class="org-banner-text">
+        <h1>⚡ MARS Restoration IT Portal</h1>
+        <p>Submit requests, track progress, get help faster</p>
+      </div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-logo">⚡ MARS HelpDesk</div>
+    <div class="nav-center">
+      <button class="nav-tab" id="tab-dashboard" style="display:none" onclick="showPage('dashboard',this)">📊 Dashboard <span class="nav-badge" id="open-count">0</span></button>
+      <button class="nav-tab active" id="tab-submit" onclick="showPage('submit',this)">🎫 Submit Ticket</button>
+    </div>
+    <div class="nav-right">
+      <div class="nav-user-pill">
+        <span class="role-dot" id="nav-dot"></span>
+        <span id="nav-uname"></span>
+        <span id="nav-role-lbl" style="font-size:.7rem;color:var(--muted);font-weight:500;"></span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- SUBMIT PAGE -->
+  <div class="page active" id="page-submit">
+    <div class="page-inner">
+      <div class="submit-hero">
+        <div class="welcome-chip" id="welcome-chip">👋 <span id="welcome-name"></span></div>
+        <h2 id="submit-hero-heading">How can we help you today?</h2>
+        <p id="submit-hero-sub">Select a category below and fill out the details. We'll assign your ticket right away.</p>
+      </div>
+      <div class="tracker-section" id="my-tickets-section">
+        <div class="tracker-header">
+          <h3>📋 My Tickets</h3>
+          <span style="font-size:.75rem;color:var(--muted);" id="my-tickets-count"></span>
+        </div>
+        <div id="my-tickets-list"></div>
+      </div>
+      <div class="cat-section-label">Step 1 — Select a category</div>
+      <div class="cat-grid">
+        <div class="cat-card" data-cat="Device & Hardware" onclick="selectCat(this)"><div class="cat-icon">💻</div><div class="cat-label">Device & Hardware</div></div>
+        <div class="cat-card" data-cat="Network & Connectivity" onclick="selectCat(this)"><div class="cat-icon">🌐</div><div class="cat-label">Network & Connectivity</div></div>
+        <div class="cat-card" data-cat="App Assistance" onclick="selectCat(this)"><div class="cat-icon">🛠️</div><div class="cat-label">App Assistance</div></div>
+        <div class="cat-card" data-cat="Access & Permissions" onclick="selectCat(this)"><div class="cat-icon">🔐</div><div class="cat-label">Access & Permissions</div></div>
+        <div class="cat-card" data-cat="Other IT Issue" onclick="selectCat(this)"><div class="cat-icon">🗂️</div><div class="cat-label">Other IT Issue</div></div>
+      </div>
+      <div class="form-card" id="ticket-form" style="display:none;">
+        <div class="form-section-title" id="form-cat-title">Issue Details</div>
+        <div id="cat-fields"></div>
+        <div class="form-section-title">Priority & Date</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Priority *</label>
+            <div class="priority-row">
+              <button class="priority-btn" data-p="Low" onclick="selectPriority(this)">🟢 Low</button>
+              <button class="priority-btn sel" data-p="Medium" onclick="selectPriority(this)">🟡 Medium</button>
+              <button class="priority-btn" data-p="High" onclick="selectPriority(this)">🔴 High</button>
+              <button class="priority-btn" data-p="Critical" onclick="selectPriority(this)">🚨 Critical</button>
+            </div>
+          </div>
+          <div class="field"><label>Issue Start Date</label><input type="date" id="f-date"/></div>
+        </div>
+        <div class="form-row full">
+          <div class="field"><label>Additional Notes (optional)</label>
+            <textarea id="f-notes" placeholder="Any extra details or context..."></textarea>
+          </div>
+        </div>
+        <button class="submit-btn" id="submit-ticket-btn" onclick="submitTicket()">🚀 Submit Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page" id="page-dashboard">
+    <div class="page-inner">
+      <div class="dash-header">
+        <div><h1>Admin Dashboard</h1><p style="color:var(--muted);font-size:.83rem;margin-top:2px;">Manage tickets and team members</p></div>
+        <span style="font-size:.75rem;color:var(--muted);" id="last-updated">—</span>
+      </div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchAdminTab('tickets',this)">🎫 All Tickets</button>
+        <button class="admin-tab" id="users-tab-btn" onclick="switchAdminTab('users',this)">👥 User Management</button>
+      </div>
+      <div class="admin-panel active" id="panel-tickets">
+        <div class="stats-row">
+          <div class="stat-card s-open"><div class="stat-label">Open</div><div class="stat-num" id="s-open">0</div></div>
+          <div class="stat-card s-progress"><div class="stat-label">In Progress</div><div class="stat-num" id="s-progress">0</div></div>
+          <div class="stat-card s-closed"><div class="stat-label">Closed</div><div class="stat-num" id="s-closed">0</div></div>
+          <div class="stat-card s-critical"><div class="stat-label">Critical</div><div class="stat-num" id="s-critical">0</div></div>
+        </div>
+        <div class="chart-section">
+          <div class="chart-title">Tickets by Category</div>
+          <div class="bar-chart" id="bar-chart"></div>
+        </div>
+        <div class="filters">
+          <button class="filter-btn active" onclick="setFilter('All',this)">All</button>
+          <button class="filter-btn" onclick="setFilter('Open',this)">🔵 Open</button>
+          <button class="filter-btn" onclick="setFilter('In Progress',this)">🟡 In Progress</button>
+          <button class="filter-btn" onclick="setFilter('Closed',this)">✅ Closed</button>
+          <button class="filter-btn" onclick="setFilter('Critical',this)">🚨 Critical</button>
+          <input class="search-box" type="text" placeholder="🔍 Search tickets…" oninput="renderTable()" id="search-input"/>
+        </div>
+        <div class="table-wrap">
+          <table class="t">
+            <thead><tr><th>ID</th><th>Submitted By</th><th>Category</th><th>Title / Issue</th><th>Priority</th><th>Assignee</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="ticket-tbody"></tbody>
+          </table>
+          <div id="no-tickets" style="text-align:center;padding:40px;color:var(--muted);display:none;">No tickets found.</div>
+        </div>
+      </div>
+      <div class="admin-panel" id="panel-users">
+        <div class="section-hdr">
+          <div><h2 style="font-family:'Familjen Grotesk',sans-serif;font-size:1rem;font-weight:800;">Team Members</h2><p style="color:var(--muted);font-size:.8rem;margin-top:2px;">Manage login access and roles</p></div>
+          <button class="add-btn" onclick="openAddUser()">+ Add User</button>
+        </div>
+        <div class="table-wrap">
+          <table class="t">
+            <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Actions</th></tr></thead>
+            <tbody id="user-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:14px;padding:14px;background:var(--accent-light);border-radius:10px;font-size:.77rem;color:var(--muted);line-height:1.8;">
+          🔑 <b style="color:var(--text)">Roles:</b> &nbsp;
+          <span class="badge badge-superadmin">Super Admin</span> Full access incl. user management &nbsp;|&nbsp;
+          <span class="badge badge-user">User</span> Submit tickets + track own tickets only
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer-app" style="margin-top:auto;">
+    <div class="footer-logo">⚡ MARS HelpDesk</div>
+    <div class="footer-contacts" id="footer-contacts-app"></div>
+    <div style="font-size:.72rem;color:var(--muted);">IT Support Portal © <span id="yr"></span></div>
+  </footer>
+</div>
+
+<!-- TICKET MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h2 id="m-title"></h2>
+    <div class="modal-meta" id="m-meta"></div>
+    <div class="modal-field"><label>Category</label><p id="m-cat"></p></div>
+    <div class="modal-field"><label>Issue Details</label><p id="m-details" style="white-space:pre-wrap;"></p></div>
+    <div class="modal-field"><label>Additional Notes</label><p id="m-notes"></p></div>
+    <div class="modal-field"><label>Assigned To</label><p id="m-assign"></p></div>
+    <div class="modal-field"><label>Update Status</label>
+      <select id="m-status" style="margin-top:4px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;font-size:.85rem;outline:none;color:var(--text);">
+        <option>Open</option><option>In Progress</option><option>Closed</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="saveStatus()">💾 Save</button>
+      <button class="modal-btn success-btn" onclick="closeTicketAction()">✅ Close Ticket</button>
+      <button class="modal-btn close-btn" onclick="closeModal()">✕ Dismiss</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT USER MODAL -->
+<div class="modal-overlay" id="user-modal" onclick="closeUMOutside(event)">
+  <div class="modal" style="max-width:440px;">
+    <h2 id="um-title">Add New User</h2>
+    <div class="modal-meta">Set this user's role and department. They will sign up themselves using the invite code.</div>
+    <div class="modal-field"><label>Full Name *</label><input type="text" id="um-name" placeholder="e.g. Sarah Johnson" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;font-size:.87rem;outline:none;color:var(--text);"/></div>
+    <div class="modal-field"><label>Email *</label><input type="email" id="um-email" placeholder="user@marsrestoration.com" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;font-size:.87rem;outline:none;color:var(--text);"/></div>
+    <div class="modal-field"><label>Temporary Password *</label><input type="password" id="um-pass" placeholder="Set a temporary password" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;font-size:.87rem;outline:none;color:var(--text);"/></div>
+    <div class="modal-field"><label>Department</label>
+      <select id="um-dept" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;font-size:.87rem;outline:none;color:var(--text);">
+        <option value="">— Select —</option>
+        <option>Operations</option><option>Finance</option><option>HR</option>
+        <option>IT</option><option>Sales</option><option>Marketing</option><option>Executive</option><option>Other</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>Role</label>
+      <select id="um-role" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;font-size:.87rem;outline:none;color:var(--text);">
+        <option value="user">👤 User — Submit tickets only</option>
+        <option value="superadmin">👑 Super Admin — Full access</option>
+      </select>
+    </div>
+    <div id="um-err" style="color:var(--danger);font-size:.78rem;min-height:16px;margin-top:4px;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="saveUser()">💾 Save</button>
+      <button class="modal-btn close-btn" onclick="closeUM()">✕ Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon">✅</div>
+  <div class="toast-text"><b>Ticket Submitted!</b><span id="toast-sub"></span></div>
+</div>
+
+<!-- FIREBASE SDKs -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ═══════════════════════════════
+//  FIREBASE CONFIG
+// ═══════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyA16_pqTZW4JO4t9s9T39p8OeZqG5wAjp4",
+  authDomain: "mars-helpdesk.firebaseapp.com",
+  projectId: "mars-helpdesk",
+  storageBucket: "mars-helpdesk.firebasestorage.app",
+  messagingSenderId: "310322566026",
+  appId: "1:310322566026:web:272ff4a32ee64a13f7ee73"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ═══════════════════════════════
+//  CONTACT INFO
+// ═══════════════════════════════
+const CONTACT_INFO = [
+  { label: '📧 Email',  value: 'govada.harsha@marsrestoration.com' },
+  { label: '📞 Phone',  value: '+1 (240) 640-6215' },
+  { label: '🏢 Office', value: 'Room 139' },
+  { label: '🕐 Hours',  value: 'Mon–Fri, 9am–5pm' },
+];
+
+// ── INVITE CODE — change anytime ──
+const INVITE_CODE = 'MARS2025';
+
+const CAT_COLORS = {
+  'Device & Hardware':'#1a56db','Access & Permissions':'#ef4444',
+  'App Assistance':'#a855f7','Network & Connectivity':'#0ea5e9','Other IT Issue':'#6b7a99'
+};
+
+// ═══════════════════════════════
+//  STATE
+// ═══════════════════════════════
+let currentUser = null;   // Firebase auth user
+let userProfile = null;   // Firestore profile {name, email, dept, role}
+let tickets = [];
+let allUsers = [];
+let selectedCat = '', selectedPriority = 'Medium', currentFilter = 'All';
+let activeTicketId = null, editingUserId = null;
+let unsubTickets = null;
+
+// ═══════════════════════════════
+//  INIT
+// ═══════════════════════════════
+function renderFooter(){
+  const html = CONTACT_INFO.map(c=>`<div class="contact-item"><span>${c.label}:</span><span>${c.value}</span></div>`).join('');
+  ['footer-contacts-login','footer-contacts-signup','footer-contacts-app'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML=html;
+  });
+  document.getElementById('yr').textContent = new Date().getFullYear();
+}
+renderFooter();
+document.getElementById('f-date').valueAsDate = new Date();
+
+// Auth state listener — runs on every page load
+onAuthStateChanged(auth, async (user) => {
+  document.getElementById('loading-overlay').style.display = 'none';
+  if(user){
+    currentUser = user;
+    const snap = await getDoc(doc(db,'users', user.uid));
+    if(snap.exists()){
+      userProfile = snap.data();
+      bootApp();
+    } else {
+      // Profile missing — log out
+      await signOut(auth);
+      showLoginScreen();
+    }
+  } else {
+    currentUser = null; userProfile = null;
+    showLoginScreen();
+  }
+});
+
+// ═══════════════════════════════
+//  AUTH FUNCTIONS
+// ═══════════════════════════════
+function showLoginScreen(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('signup-screen').style.display='none';
+  document.getElementById('app').style.display='none';
+}
+window.showLogin = function(){
+  document.getElementById('signup-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('signup-err').textContent='';
+};
+window.showSignup = function(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('signup-screen').style.display='flex';
+  document.getElementById('login-err').textContent='';
+};
+
+window.doLogin = async function(){
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  const err   = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+  err.textContent='';
+  if(!email||!pass){err.textContent='⚠️ Please enter your email and password.';return;}
+  btn.disabled=true; btn.textContent='Signing in…';
+  try{
+    await signInWithEmailAndPassword(auth, email, pass);
+    // onAuthStateChanged will handle bootApp
+  } catch(e){
+    err.textContent = e.code==='auth/invalid-credential'||e.code==='auth/user-not-found'||e.code==='auth/wrong-password'
+      ? '⚠️ Invalid email or password.' : '⚠️ '+e.message;
+    btn.disabled=false; btn.textContent='Sign In →';
+  }
+};
+
+window.doSignup = async function(){
+  const name   = document.getElementById('su-name').value.trim();
+  const email  = document.getElementById('su-email').value.trim();
+  const pass   = document.getElementById('su-pass').value;
+  const dept   = document.getElementById('su-dept').value;
+  const invite = document.getElementById('su-invite').value.trim().toUpperCase();
+  const err    = document.getElementById('signup-err');
+  const btn    = document.getElementById('signup-btn');
+  err.textContent='';
+  if(!name||!email||!pass){err.textContent='⚠️ Name, email and password are required.';return;}
+  if(pass.length<6){err.textContent='⚠️ Password must be at least 6 characters.';return;}
+  if(invite!==INVITE_CODE){err.textContent='⚠️ Invalid invite code. Please contact your IT admin.';return;}
+  btn.disabled=true; btn.textContent='Creating account…';
+  try{
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await setDoc(doc(db,'users',cred.user.uid),{
+      name, email, dept, role:'user', created: new Date().toLocaleDateString()
+    });
+    // onAuthStateChanged handles bootApp
+  } catch(e){
+    err.textContent = e.code==='auth/email-already-in-use'
+      ? '⚠️ An account with this email already exists.' : '⚠️ '+e.message;
+    btn.disabled=false; btn.textContent='Create Account →';
+  }
+};
+
+window.doLogout = async function(){
+  if(unsubTickets){ unsubTickets(); unsubTickets=null; }
+  await signOut(auth);
+};
+
+// ═══════════════════════════════
+//  BOOT APP
+// ═══════════════════════════════
+function bootApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('signup-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+
+  const isAdmin = userProfile.role==='superadmin';
+  document.getElementById('nav-uname').textContent = userProfile.name;
+  document.getElementById('nav-role-lbl').textContent = isAdmin ? '· Super Admin' : '· User';
+  document.getElementById('nav-dot').className = 'role-dot '+(isAdmin?'superadmin':'user');
+  document.getElementById('welcome-chip').style.display = isAdmin ? 'none' : 'inline-flex';
+  document.getElementById('welcome-name').textContent = 'Welcome back, '+userProfile.name.split(' ')[0]+'!';
+  document.getElementById('tab-dashboard').style.display = isAdmin ? '' : 'none';
+  document.getElementById('users-tab-btn').style.display = isAdmin ? '' : 'none';
+
+  if(isAdmin){
+    document.getElementById('submit-hero-heading').textContent='Select a category below to find your support tickets.';
+    document.getElementById('submit-hero-sub').style.display='none';
+  } else {
+    document.getElementById('submit-hero-heading').textContent='How can we help you today?';
+    document.getElementById('submit-hero-sub').style.display='';
+  }
+
+  // Reset nav/pages
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+
+  if(isAdmin){
+    document.getElementById('tab-dashboard').classList.add('active');
+    document.getElementById('page-dashboard').classList.add('active');
+  } else {
+    document.getElementById('tab-submit').classList.add('active');
+    document.getElementById('page-submit').classList.add('active');
+  }
+
+  // Subscribe to tickets in real-time
+  subscribeTickets(isAdmin);
+  if(isAdmin) loadUsers();
+}
+
+// ═══════════════════════════════
+//  REALTIME TICKET SUBSCRIPTION
+// ═══════════════════════════════
+function subscribeTickets(isAdmin){
+  if(unsubTickets){ unsubTickets(); }
+  const q = query(collection(db,'tickets'), orderBy('createdAt','desc'));
+  unsubTickets = onSnapshot(q, (snap)=>{
+    tickets = snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateBadge();
+    renderMyTickets();
+    if(isAdmin && document.getElementById('page-dashboard').classList.contains('active')){
+      refreshDashboard();
+    }
+  });
+}
+
+// ═══════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════
+window.showPage = function(p, btn){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(p==='dashboard') refreshDashboard();
+};
+window.switchAdminTab = function(tab, btn){
+  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='users') loadUsers();
+};
+
+// ═══════════════════════════════
+//  MY TICKETS TRACKER
+// ═══════════════════════════════
+function renderMyTickets(){
+  if(!currentUser) return;
+  const mine = tickets.filter(t=>t.submittedBy===currentUser.uid);
+  const sec  = document.getElementById('my-tickets-section');
+  const list = document.getElementById('my-tickets-list');
+  const cnt  = document.getElementById('my-tickets-count');
+  if(!mine.length){
+    sec.style.display='block';
+    list.innerHTML=`<div style="padding:18px;text-align:center;color:var(--muted);font-size:.83rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">No tickets yet — submit your first one below! 👇</div>`;
+    cnt.textContent=''; return;
+  }
+  cnt.textContent = mine.length+' ticket'+(mine.length>1?'s':'');
+  list.innerHTML = mine.slice(0,5).map(t=>`
+    <div class="my-ticket-card">
+      <div class="mtc-id">${t.ticketId||t.id}</div>
+      <div class="mtc-info">
+        <div class="mtc-title">${t.title||t.cat}</div>
+        <div class="mtc-cat">${t.cat} · ${t.submitted}</div>
+      </div>
+      <div class="mtc-right">
+        <span class="badge badge-${t.status==='Open'?'open':t.status==='In Progress'?'progress':'closed'}">${t.status}</span>
+        <span style="font-size:.7rem;color:var(--muted);">${t.priority}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════
+//  CATEGORY FORMS
+// ═══════════════════════════════
+const CAT_FIELDS = {
+  'Device & Hardware': ()=>`
+    <div class="form-row">
+      <div class="field"><label>Type of Device *</label>
+        <select id="cf-device-type" onchange="toggleOther('cf-device-type','cf-device-other')">
+          <option value="">— Select device —</option>
+          <option>iPad</option><option>Laptop</option><option>Desktop</option>
+          <option>Printer</option><option>Smartphone</option><option>Monitor</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field" id="cf-device-other" style="display:none;"><label>Specify Device</label><input type="text" id="cf-device-other-txt" placeholder="Describe the device"/></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Device Issue *</label>
+        <select id="cf-device-issue" onchange="toggleOther('cf-device-issue','cf-device-issue-other')">
+          <option value="">— Select issue —</option>
+          <option>Device not turning on</option><option>Slow performance</option>
+          <option>Hardware broken / damaged</option><option>Need access / permission</option>
+          <option>Software not installing</option><option>Screen / display issue</option>
+          <option>Battery / charging issue</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field" id="cf-device-issue-other" style="display:none;"><label>Describe Issue</label><input type="text" id="cf-device-issue-other-txt" placeholder="Briefly describe the issue"/></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Asset Tag / Serial # (optional)</label><input type="text" id="cf-asset" placeholder="e.g. LAP-00423"/></div>
+      <div class="field"><label>Location / Room</label><input type="text" id="cf-location" placeholder="e.g. Office 3B"/></div>
+    </div>
+    <div class="form-row full">
+      <div class="field"><label>Issue Description *</label><textarea id="cf-desc" placeholder="Describe the problem in detail…"></textarea></div>
+    </div>`,
+
+  'Access & Permissions': ()=>`
+    <div class="form-row">
+      <div class="field"><label>Application / Platform *</label>
+        <select id="cf-app" onchange="toggleOther('cf-app','cf-app-other')">
+          <option value="">— Select app —</option>
+          <option>SalesPro</option><option>Canvass</option><option>ContractorsCloud</option>
+          <option>Spotio</option><option>CompanyCam</option><option>Hover</option>
+          <option>Hail Trace</option><option>Hail Recon</option><option>Excel</option>
+          <option>Microsoft 365</option><option>SharePoint</option><option>VPN</option>
+          <option>Email / Outlook</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field" id="cf-app-other" style="display:none;"><label>Specify App</label><input type="text" id="cf-app-other-txt" placeholder="App or platform name"/></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Type of Access Needed *</label>
+        <select id="cf-access-type">
+          <option value="">— Select —</option>
+          <option>Read only</option><option>Read & Write</option><option>Full Admin</option>
+          <option>Remove Access</option><option>Reset Password</option><option>New Account Setup</option>
+        </select>
+      </div>
+      <div class="field"><label>Access For (if not yourself)</label><input type="text" id="cf-access-for" placeholder="Name or employee ID"/></div>
+    </div>
+    <div class="form-row full">
+      <div class="field"><label>Business Reason / Justification *</label><textarea id="cf-access-reason" placeholder="Why is this access needed? Who approved it?"></textarea></div>
+    </div>`,
+
+  'Network & Connectivity': ()=>`
+    <div class="form-row">
+      <div class="field"><label>Issue Type *</label>
+        <select id="cf-net-issue" onchange="toggleOther('cf-net-issue','cf-net-other')">
+          <option value="">— Select —</option>
+          <option>No internet connection</option><option>Slow internet</option>
+          <option>Cannot connect to WiFi</option><option>VPN not working</option>
+          <option>Shared drive not accessible</option><option>Printer not on network</option>
+          <option>Intermittent drops</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field" id="cf-net-other" style="display:none;"><label>Describe Issue</label><input type="text" id="cf-net-other-txt" placeholder="Describe connectivity issue"/></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Affected Device(s)</label><input type="text" id="cf-net-device" placeholder="e.g. Laptop, all devices in room 3"/></div>
+      <div class="field"><label>Location / Floor / Room</label><input type="text" id="cf-net-location" placeholder="e.g. 2nd Floor, Conference Room B"/></div>
+    </div>
+    <div class="form-row full">
+      <div class="field"><label>Description *</label><textarea id="cf-net-desc" placeholder="Describe the issue, steps already tried…"></textarea></div>
+    </div>`,
+
+  'App Assistance': ()=>`
+    <div class="form-row">
+      <div class="field"><label>Application *</label>
+        <select id="cf-enh-app" onchange="toggleOther('cf-enh-app','cf-enh-app-other')">
+          <option value="">— Select app —</option>
+          <option>SalesPro</option><option>Canvass</option><option>ContractorsCloud</option>
+          <option>Spotio</option><option>CompanyCam</option><option>Hover</option>
+          <option>Hail Trace</option><option>Hail Recon</option><option>Excel</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field" id="cf-enh-app-other" style="display:none;"><label>Specify App</label><input type="text" id="cf-enh-app-other-txt" placeholder="App name"/></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Request Type *</label>
+        <select id="cf-enh-type">
+          <option value="">— Select type —</option>
+          <option>Bug / something not working</option><option>New feature request</option>
+          <option>Layout or display improvement</option><option>Speed / performance issue</option>
+          <option>Automation or workflow help</option><option>Data cleanup or fix</option>
+          <option>New report or dashboard</option><option>Connect with another system</option>
+        </select>
+      </div>
+      <div class="field"><label>Business Impact</label>
+        <select id="cf-enh-impact">
+          <option value="">— Select —</option>
+          <option>Saves time / efficiency</option><option>Fixes broken process</option>
+          <option>Required for compliance</option><option>Improves reporting accuracy</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="field"><label>Description & Expected Outcome *</label><textarea id="cf-enh-desc" placeholder="Describe what you need changed or added…"></textarea></div>
+    </div>`,
+
+  'Other IT Issue': ()=>`
+    <div class="form-row">
+      <div class="field"><label>Issue Category (best match)</label>
+        <select id="cf-other-cat">
+          <option value="">— Select if applicable —</option>
+          <option>Software installation</option><option>License / subscription</option>
+          <option>Data backup / recovery</option><option>Security concern</option>
+          <option>IT procurement request</option><option>Training request</option><option>General inquiry</option>
+        </select>
+      </div>
+      <div class="field"><label>Affected System / Tool</label><input type="text" id="cf-other-system" placeholder="e.g. Microsoft Office, Zoom"/></div>
+    </div>
+    <div class="form-row full">
+      <div class="field"><label>Full Description *</label><textarea id="cf-other-desc" placeholder="Describe your issue or request in as much detail as possible…"></textarea></div>
+    </div>`
+};
+
+window.selectCat = function(el){
+  document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected'); selectedCat=el.dataset.cat;
+  document.getElementById('form-cat-title').textContent=selectedCat+' — Details';
+  document.getElementById('cat-fields').innerHTML=CAT_FIELDS[selectedCat]?CAT_FIELDS[selectedCat]():'';
+  const form=document.getElementById('ticket-form');
+  form.style.display='block';
+  form.scrollIntoView({behavior:'smooth',block:'start'});
+};
+window.toggleOther = function(selectId, wrapId){
+  const sel=document.getElementById(selectId), wrap=document.getElementById(wrapId);
+  if(sel&&wrap) wrap.style.display=sel.value==='Other'?'block':'none';
+};
+window.selectPriority = function(btn){
+  document.querySelectorAll('.priority-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); selectedPriority=btn.dataset.p;
+};
+
+// ═══════════════════════════════
+//  COLLECT FIELDS
+// ═══════════════════════════════
+function collectCatFields(){
+  const g=(id)=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  let details={}, title='', valid=true, msg='';
+  if(selectedCat==='Device & Hardware'){
+    const dtype=g('cf-device-type'),dother=g('cf-device-other-txt');
+    const dissue=g('cf-device-issue'),dissueOther=g('cf-device-issue-other-txt'),desc=g('cf-desc');
+    if(!dtype){msg='Please select a device type.';valid=false;}
+    else if(!dissue){msg='Please select the device issue.';valid=false;}
+    else if(!desc){msg='Please describe the issue.';valid=false;}
+    else{ const dn=dtype==='Other'?dother:dtype, isn=dissue==='Other'?dissueOther:dissue;
+      title=dn+' — '+isn; details={deviceType:dn,issue:isn,assetTag:g('cf-asset'),location:g('cf-location'),description:desc}; }
+  } else if(selectedCat==='Access & Permissions'){
+    const app=g('cf-app'),appO=g('cf-app-other-txt'),accT=g('cf-access-type'),reason=g('cf-access-reason');
+    if(!app){msg='Please select an application.';valid=false;}
+    else if(!accT){msg='Please select the type of access.';valid=false;}
+    else if(!reason){msg='Please provide a business reason.';valid=false;}
+    else{ const an=app==='Other'?appO:app; title='Access request — '+an; details={application:an,accessType:accT,accessFor:g('cf-access-for'),reason}; }
+  } else if(selectedCat==='Network & Connectivity'){
+    const issue=g('cf-net-issue'),issO=g('cf-net-other-txt'),desc=g('cf-net-desc');
+    if(!issue){msg='Please select the network issue type.';valid=false;}
+    else if(!desc){msg='Please describe the issue.';valid=false;}
+    else{ const isn=issue==='Other'?issO:issue; title='Network: '+isn; details={issueType:isn,affectedDevices:g('cf-net-device'),location:g('cf-net-location'),description:desc}; }
+  } else if(selectedCat==='App Assistance'){
+    const app=g('cf-enh-app'),appO=g('cf-enh-app-other-txt'),type=g('cf-enh-type'),desc=g('cf-enh-desc');
+    if(!app){msg='Please select the application.';valid=false;}
+    else if(!type){msg='Please select the request type.';valid=false;}
+    else if(!desc){msg='Please describe the request.';valid=false;}
+    else{ const an=app==='Other'?appO:app; title='App Assistance: '+an+' — '+type; details={application:an,requestType:type,businessImpact:g('cf-enh-impact'),description:desc}; }
+  } else if(selectedCat==='Other IT Issue'){
+    const desc=g('cf-other-desc');
+    if(!desc){msg='Please describe your issue.';valid=false;}
+    else{ const cat=g('cf-other-cat'),sys=g('cf-other-system'); title=(cat||'Other IT Issue')+(sys?' — '+sys:''); details={category:cat||'—',system:sys||'—',description:desc}; }
+  }
+  return {valid,msg,title,details};
+}
+function formatDetails(d){
+  return Object.entries(d).filter(([,v])=>v&&v!=='—').map(([k,v])=>`${k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase())}: ${v}`).join('\n');
+}
+
+// ═══════════════════════════════
+//  SUBMIT TICKET
+// ═══════════════════════════════
+window.submitTicket = async function(){
+  if(!selectedCat){alert('Please select a category first.');return;}
+  const {valid,msg,title,details}=collectCatFields();
+  if(!valid){alert(msg);return;}
+  const btn=document.getElementById('submit-ticket-btn');
+  btn.disabled=true; btn.textContent='Submitting…';
+
+  // Get super admins for auto-assign
+  const usersSnap = await getDocs(collection(db,'users'));
+  const admins = usersSnap.docs.filter(d=>d.data().role==='superadmin').map(d=>d.data().name);
+  const assignee = admins.length ? admins[Math.floor(Math.random()*admins.length)] : 'IT Admin';
+
+  const ticketCount = (await getDocs(collection(db,'tickets'))).size;
+  const ticketId = 'TKT-'+String(ticketCount+1).padStart(4,'0');
+
+  await addDoc(collection(db,'tickets'),{
+    ticketId, submittedBy:currentUser.uid,
+    submitterName:userProfile.name, submitterEmail:userProfile.email, submitterDept:userProfile.dept||'',
+    cat:selectedCat, title, detailsText:formatDetails(details),
+    notes:document.getElementById('f-notes').value.trim(),
+    priority:selectedPriority,
+    startDate:document.getElementById('f-date').value||'—',
+    status:'Open', assignee,
+    submitted:new Date().toLocaleString(),
+    createdAt:serverTimestamp()
+  });
+
+  // reset form
+  document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('selected'));
+  selectedCat='';
+  document.getElementById('ticket-form').style.display='none';
+  document.getElementById('cat-fields').innerHTML='';
+  document.getElementById('f-notes').value='';
+  document.getElementById('f-date').valueAsDate=new Date();
+  document.querySelectorAll('.priority-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelector('[data-p="Medium"]').classList.add('sel');
+  selectedPriority='Medium';
+  btn.disabled=false; btn.textContent='🚀 Submit Ticket';
+  window.scrollTo({top:0,behavior:'smooth'});
+  const toast=document.getElementById('toast');
+  document.getElementById('toast-sub').textContent=` Assigned to ${assignee} · ${ticketId}`;
+  toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),4500);
+};
+
+function updateBadge(){
+  document.getElementById('open-count').textContent=tickets.filter(t=>t.status==='Open').length;
+}
+
+// ═══════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════
+function refreshDashboard(){
+  document.getElementById('s-open').textContent=tickets.filter(t=>t.status==='Open').length;
+  document.getElementById('s-progress').textContent=tickets.filter(t=>t.status==='In Progress').length;
+  document.getElementById('s-closed').textContent=tickets.filter(t=>t.status==='Closed').length;
+  document.getElementById('s-critical').textContent=tickets.filter(t=>t.priority==='Critical'&&t.status!=='Closed').length;
+  document.getElementById('last-updated').textContent='Updated: '+new Date().toLocaleTimeString();
+  renderBarChart(); renderTable();
+}
+function renderBarChart(){
+  const cats=Object.keys(CAT_COLORS);
+  const counts=cats.map(c=>tickets.filter(t=>t.cat===c).length);
+  const max=Math.max(...counts,1);
+  document.getElementById('bar-chart').innerHTML=cats.map((c,i)=>`
+    <div class="bar-wrap">
+      <div class="bar" style="height:${Math.round((counts[i]/max)*80)+8}px;background:${CAT_COLORS[c]};opacity:${counts[i]?1:.18}"></div>
+      <div class="bar-lbl">${c.split(' ')[0]}</div>
+    </div>`).join('');
+}
+window.setFilter = function(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderTable();
+};
+function renderTable(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  const filtered=tickets.filter(t=>{
+    const sm=currentFilter==='All'||t.status===currentFilter||(currentFilter==='Critical'&&t.priority==='Critical');
+    const qm=!q||[t.title,t.submitterName,t.ticketId,t.cat].some(v=>(v||'').toLowerCase().includes(q));
+    return sm&&qm;
+  });
+  const tbody=document.getElementById('ticket-tbody');
+  const noMsg=document.getElementById('no-tickets');
+  if(!filtered.length){tbody.innerHTML='';noMsg.style.display='block';return;}
+  noMsg.style.display='none';
+  tbody.innerHTML=filtered.map(t=>`
+    <tr>
+      <td style="color:var(--muted);font-size:.72rem;font-weight:700;">${t.ticketId||t.id}</td>
+      <td><b style="font-size:.85rem;">${t.submitterName||'—'}</b><br/><span style="color:var(--muted);font-size:.72rem;">${t.submitterDept||''}</span></td>
+      <td style="font-size:.78rem;">${t.cat}</td>
+      <td style="max-width:200px;font-size:.82rem;">${t.title||t.cat}</td>
+      <td><span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span></td>
+      <td><span class="assignee-chip">👤 ${t.assignee}</span></td>
+      <td><span class="badge badge-${t.status==='Open'?'open':t.status==='In Progress'?'progress':'closed'}">${t.status}</span></td>
+      <td style="color:var(--muted);font-size:.72rem;white-space:nowrap;">${t.submitted}</td>
+      <td><button class="action-btn" onclick="openModal('${t.id}')">View</button></td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════
+//  TICKET MODAL
+// ═══════════════════════════════
+window.openModal = function(id){
+  const t=tickets.find(x=>x.id===id); if(!t)return;
+  activeTicketId=id;
+  document.getElementById('m-title').textContent=t.title||t.cat;
+  document.getElementById('m-meta').textContent=`${t.ticketId||t.id} · Submitted by ${t.submitterName} (${t.submitterEmail}) · ${t.submitted}`;
+  document.getElementById('m-cat').textContent=t.cat;
+  document.getElementById('m-details').textContent=t.detailsText||'—';
+  document.getElementById('m-notes').textContent=t.notes||'—';
+  document.getElementById('m-assign').textContent=t.assignee;
+  document.getElementById('m-status').value=t.status;
+  document.getElementById('modal').classList.add('open');
+};
+window.closeModal = function(){ document.getElementById('modal').classList.remove('open'); activeTicketId=null; };
+window.closeModalOutside = function(e){ if(e.target===document.getElementById('modal')) closeModal(); };
+window.saveStatus = async function(){
+  if(!activeTicketId)return;
+  const newStatus=document.getElementById('m-status').value;
+  await updateDoc(doc(db,'tickets',activeTicketId),{status:newStatus});
+  closeModal();
+};
+window.closeTicketAction = async function(){
+  if(!activeTicketId)return;
+  await updateDoc(doc(db,'tickets',activeTicketId),{status:'Closed'});
+  closeModal();
+};
+
+// ═══════════════════════════════
+//  USER MANAGEMENT
+// ═══════════════════════════════
+async function loadUsers(){
+  const snap = await getDocs(collection(db,'users'));
+  allUsers = snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderUsers();
+}
+function renderUsers(){
+  document.getElementById('user-tbody').innerHTML=allUsers.map(u=>`
+    <tr>
+      <td><b>${u.name}</b></td>
+      <td style="font-size:.82rem;color:var(--muted);">${u.email||'—'}</td>
+      <td style="font-size:.8rem;">${u.dept||'—'}</td>
+      <td><span class="badge badge-${u.role}">${u.role==='superadmin'?'👑 Super Admin':'👤 User'}</span></td>
+      <td>
+        <button class="action-btn" onclick="openEditUser('${u.id}')">Edit Role</button>
+        ${u.id!==currentUser.uid?`<button class="action-btn danger" onclick="deleteUser('${u.id}')">Remove</button>`:'<span style="color:var(--muted);font-size:.73rem;">You</span>'}
+      </td>
+    </tr>`).join('');
+}
+window.openAddUser = function(){
+  editingUserId=null;
+  document.getElementById('um-title').textContent='Add New User';
+  ['um-name','um-email','um-pass'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('um-dept').value='';
+  document.getElementById('um-role').value='user';
+  document.getElementById('um-err').textContent='';
+  document.getElementById('user-modal').classList.add('open');
+};
+window.openEditUser = function(id){
+  const u=allUsers.find(x=>x.id===id); if(!u)return;
+  editingUserId=id;
+  document.getElementById('um-title').textContent='Edit User';
+  document.getElementById('um-name').value=u.name;
+  document.getElementById('um-email').value=u.email||'';
+  document.getElementById('um-pass').value='';
+  document.getElementById('um-dept').value=u.dept||'';
+  document.getElementById('um-role').value=u.role;
+  document.getElementById('um-err').textContent='';
+  document.getElementById('user-modal').classList.add('open');
+};
+window.saveUser = async function(){
+  const name=document.getElementById('um-name').value.trim();
+  const email=document.getElementById('um-email').value.trim();
+  const pass=document.getElementById('um-pass').value;
+  const dept=document.getElementById('um-dept').value;
+  const role=document.getElementById('um-role').value;
+  const errEl=document.getElementById('um-err'); errEl.textContent='';
+  if(!name||!email){errEl.textContent='Name and email are required.';return;}
+  if(editingUserId){
+    await updateDoc(doc(db,'users',editingUserId),{name,dept,role});
+    closeUM(); loadUsers();
+  } else {
+    if(!pass||pass.length<6){errEl.textContent='Password must be at least 6 characters.';return;}
+    try{
+      const cred=await createUserWithEmailAndPassword(auth,email,pass);
+      await setDoc(doc(db,'users',cred.user.uid),{name,email,dept,role,created:new Date().toLocaleDateString()});
+      closeUM(); loadUsers();
+    } catch(e){
+      errEl.textContent=e.code==='auth/email-already-in-use'?'Email already in use.':'Error: '+e.message;
+    }
+  }
+};
+window.deleteUser = async function(id){
+  if(!confirm('Remove this user from the portal?'))return;
+  await deleteDoc(doc(db,'users',id));
+  loadUsers();
+};
+window.closeUM = function(){ document.getElementById('user-modal').classList.remove('open'); editingUserId=null; };
+window.closeUMOutside = function(e){ if(e.target===document.getElementById('user-modal')) closeUM(); };
+
+</script>
+</body>
+</html>
